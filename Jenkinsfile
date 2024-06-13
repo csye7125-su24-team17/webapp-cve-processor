@@ -11,13 +11,13 @@ pipeline {
                     withCredentials([usernamePassword(credentialsId: 'github-pat', usernameVariable: 'GIT_USERNAME', passwordVariable: 'GIT_PASSWORD')]) {
                         // Correctly setting up Git to use credentials
                         sh 'git config credential.helper "!f() { echo username=\\$GIT_USERNAME; echo password=\\$GIT_PASSWORD; }; f"'
-                        
                         // Fetching the target branch to compare differences
                         sh "git fetch --no-tags origin +refs/heads/${env.TARGET_BRANCH}:refs/remotes/origin/${env.TARGET_BRANCH}"
-
-                        // Extracting only the last commit message
-                        def lastCommitMsg = sh(script: "git log -1 HEAD --pretty=format:'%s'", returnStdout: true).trim()
-
+ 
+                        // Checkout to the latest commit of the PR branch
+                        sh "git checkout -B ${env.BRANCH_NAME} origin/${env.BRANCH_NAME}"
+                        // Extracting only the last commit message from the PR branch
+                        def lastCommitMsg = sh(script: "git log -1 --pretty=format:'%s'", returnStdout: true).trim()
                         // Check the last commit message against the Conventional Commits format
                         if (!lastCommitMsg.matches("^(feat|fix|docs|style|refactor|perf|test|chore|revert|ci|build)(!)?(\\(\\S+\\))?\\: .+")) {
                             echo "The last commit message does not follow Conventional Commits format:"
